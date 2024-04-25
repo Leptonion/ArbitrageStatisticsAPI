@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class ListingResponse(BaseModel):
@@ -26,13 +26,12 @@ class ErrorResponse(BaseModel):
 
 
 class DBAgent(BaseModel):
+    model_config = ConfigDict(from_attributes = True)
+
     id: int = 1
     full_name: str = "Antony Hatchet"
     position: str = "manager"
     start_date: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class DBProvider(BaseModel):
@@ -45,26 +44,26 @@ class DBProvider(BaseModel):
 
 
 class DBClient(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int = 1
     title: str = "John Doe ltd."
     add_date: datetime
     contact: str
     from_source: str = "site"
 
-    class Config:
-        from_attributes = True
-
 
 class DBPayment(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int = 1
     pay_value: float = 83.25
     create_date: datetime
 
-    class Config:
-        from_attributes = True
-
 
 class DBContract(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int = 1
     title: str = "Contract-1111"
     price_per_day: float = 10.55
@@ -74,11 +73,10 @@ class DBContract(BaseModel):
     seller: DBProvider
     agent: DBAgent
 
-    class Config:
-        from_attributes = True
-
 
 class DBDeal(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int = 1
     full_price: float = 85.33
     start_date: datetime
@@ -87,6 +85,3 @@ class DBDeal(BaseModel):
     agent: DBAgent
     contract: DBContract
     payments: List[DBPayment]
-
-    class Config:
-        from_attributes = True
