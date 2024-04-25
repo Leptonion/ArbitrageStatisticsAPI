@@ -1,6 +1,6 @@
 import datetime
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from fastapi_cache.decorator import cache
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,7 +10,7 @@ from auth.base_config import current_user
 from database import get_async_session, User
 from deals.utils import db_get_deals_list
 from models import Deal
-from deals.schemas import Deals
+from deals.schemas import Deals, DealError
 from deals.schemas import Deal as SchemDeal
 
 router = APIRouter(
@@ -57,13 +57,18 @@ async def get_deals_list(limit: int = Query(le=100, ge=1, default=15),
 
 
 @router.get("/{deal_id}", response_model=SchemDeal,
+            responses={404: {"model": DealError, "description": "Deal not found"}},
             description="Deal details by deal ID", name="Deal by ID")
 async def get_deal_by_id(deal_id: int, session: AsyncSession = Depends(get_async_session),
                          user: User = Depends(current_user)):
 
     query = select(Deal).where(Deal.id == deal_id).options(selectinload(Deal.payments))
     result = await session.execute(query)
+    result = result.scalars().first()
+
+    if not result:
+        raise HTTPException(status_code=404, detail="Deal not found!")
 
     return {"status": "success",
-            "data": result.scalars().one(),
+            "data": result,
             "details": "Deal details by ID"}

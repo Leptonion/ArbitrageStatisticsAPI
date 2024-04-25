@@ -1,12 +1,12 @@
 import datetime
 
-from fastapi import APIRouter, Depends, Query, Path
+from fastapi import APIRouter, Depends, Query, Path, HTTPException
 from fastapi_cache.decorator import cache
 from sqlalchemy import select, func
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from agents.schemas import Agents, Achievement
+from agents.schemas import Agents, Achievement, AgentError
 from agents.schemas import Agent as SchemAgent
 from agents.utils import db_agent_achievement, db_get_agents_list
 from auth.base_config import current_user
@@ -56,6 +56,7 @@ async def get_agents_list(limit: int = Query(le=100, ge=1, default=15),
 
 
 @router.get("/{agent_id}", response_model=SchemAgent,
+            responses={404: {"model": AgentError, "description": "Agent not found"}},
             description="Agent details by agent ID", name="Agent by ID")
 @cache(expire=60)
 async def get_agent_by_id(agent_id: int,
@@ -64,9 +65,13 @@ async def get_agent_by_id(agent_id: int,
 
     query = select(Agent).where(Agent.id == agent_id)
     result = await session.execute(query)
+    result = result.scalars().first()
+
+    if not result:
+        raise HTTPException(status_code=404, detail="Agent not found!")
 
     return {"status": "success",
-            "data": result.scalars().first(),
+            "data": result,
             "details": "Agent information by ID"}
 
 

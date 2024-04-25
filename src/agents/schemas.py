@@ -28,3 +28,10 @@ class Achievement(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
+
+
+"""Error Schemas"""
+
+
+class AgentError(BaseModel):
+    details: str = "Agent not found"

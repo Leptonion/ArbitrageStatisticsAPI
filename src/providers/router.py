@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from fastapi_cache.decorator import cache
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from auth.base_config import current_user
 from database import get_async_session, User
 from models import Provider
-from providers.schemas import Providers
+from providers.schemas import Providers, ProviderError
 from providers.schemas import Provider as SchemProvider
 from providers.utils import db_get_providers_list
 
@@ -65,6 +65,7 @@ async def get_providers_list(limit: int = Query(le=100, ge=1, default=15),
 
 
 @router.get("/{provider_id}", response_model=SchemProvider,
+            responses={404: {"model": ProviderError, "description": "Provider not found"}},
             description="Provider details by provider ID", name="Provider by ID")
 @cache(expire=60)
 async def get_provider_by_id(provider_id: int,
@@ -73,7 +74,11 @@ async def get_provider_by_id(provider_id: int,
 
     query = select(Provider).where(Provider.id == provider_id)
     result = await session.execute(query)
+    result = result.scalars().first()
+
+    if not result:
+        raise HTTPException(status_code=404, detail="Provider not found!")
 
     return {"status": "success",
-            "data": result.scalars().first(),
+            "data": result,
             "details": "Provider information by ID"}

@@ -1,12 +1,12 @@
 import datetime
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from fastapi_cache.decorator import cache
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.base_config import current_user
-from clients.schemas import Clients
+from clients.schemas import Clients, ClientError
 from clients.schemas import Client as SchemClient
 from clients.utils import db_get_clients_list
 from database import get_async_session, User
@@ -62,6 +62,7 @@ async def get_clients_list(limit: int = Query(le=100, ge=1, default=15),
 
 
 @router.get("/{client_id}", response_model=SchemClient,
+            responses={404: {"model": ClientError, "description": "Client not found"}},
             description="Client details by client ID", name="Client by ID")
 @cache(expire=60)
 async def get_client_by_id(client_id: int, session: AsyncSession = Depends(get_async_session),
@@ -69,7 +70,11 @@ async def get_client_by_id(client_id: int, session: AsyncSession = Depends(get_a
 
     query = select(Client).where(Client.id == client_id)
     result = await session.execute(query)
+    result = result.scalars().first()
+
+    if not result:
+        raise HTTPException(status_code=404, detail="Client not found!")
 
     return {"status": "success",
-            "data": result.scalars().first(),
+            "data": result,
             "details": "Client information by ID"}

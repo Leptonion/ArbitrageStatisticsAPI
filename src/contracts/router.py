@@ -1,12 +1,12 @@
 import datetime
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from fastapi_cache.decorator import cache
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.base_config import current_user
-from contracts.schemas import Contracts
+from contracts.schemas import Contracts, ContractError
 from contracts.schemas import Contract as SchemContract
 from contracts.utils import db_get_contracts_list
 from database import get_async_session, User
@@ -55,6 +55,7 @@ async def get_contracts_list(limit: int = Query(le=100, ge=1, default=15),
 
 
 @router.get("/{contract_id}", response_model=SchemContract,
+            responses={404: {"model": ContractError, "description": "Contract not found"}},
             description="Contract details by contract ID", name="Contract by ID")
 @cache(expire=60)
 async def get_contract_by_id(contract_id: int, session: AsyncSession = Depends(get_async_session),
@@ -62,7 +63,11 @@ async def get_contract_by_id(contract_id: int, session: AsyncSession = Depends(g
 
     query = select(Contract).where(Contract.id == contract_id)
     result = await session.execute(query)
+    result = result.scalars().first()
+
+    if not result:
+        raise HTTPException(status_code=404, detail="Contract not found!")
 
     return {"status": "success",
-            "data": result.scalars().first(),
+            "data": result,
             "details": "List of Contracts"}

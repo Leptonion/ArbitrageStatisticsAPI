@@ -14,3 +14,9 @@ class Deal(RowResponse):
 class Deals(ListingResponse):
     data: List[DBDeal]
     details: str = "List of Deals"
+
+"""Error Schemas"""
+
+
+class DealError(BaseModel):
+    details: str = "Deal not found"

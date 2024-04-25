@@ -1,5 +1,7 @@
 from typing import List
 
+from pydantic import BaseModel
+
 from general_schemas import RowResponse, DBClient, ListingResponse
 
 
@@ -11,3 +13,10 @@ class Client(RowResponse):
 class Clients(ListingResponse):
     data: List[DBClient]
     details: str = "List of Clients"
+
+
+"""Error Schemas"""
+
+
+class ClientError(BaseModel):
+    details: str = "Client not found"
