@@ -1,5 +1,6 @@
 import datetime
 
+from fastapi import HTTPException
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 

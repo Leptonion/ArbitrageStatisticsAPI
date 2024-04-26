@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from fastapi import HTTPException
 from sqlalchemy import select, func, and_, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,6 +24,9 @@ async def db_agent_achievement(agent_id: int,
                                period_from: datetime.date,
                                period_to: datetime.date,
                                session: AsyncSession):
+    if period_from >= period_to:
+        raise HTTPException(status_code=422, detail="Invalid date range - (period_from - period_to)!")
+
     contracts = select(func.count(Contract.id).label("contract_count"),
                        func.sum(Contract.price_per_day * Contract.duration_days).label("contract_sum")) \
         .where(Contract.agent_id == agent_id) \
@@ -42,6 +46,10 @@ async def db_agent_achievement(agent_id: int,
 
     res = await session.execute(agent)
     res = res.first()
+
+    if not res:
+        raise HTTPException(status_code=404, detail="Agent not found!")
+
     return {
         "agent": res.Agent,
         "from_date": period_from,
