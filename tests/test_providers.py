@@ -2,7 +2,6 @@ from httpx import AsyncClient
 
 from conftest import AuthData
 
-
 """Login test TOKEN"""
 
 
@@ -14,28 +13,29 @@ async def test_push_login(ac: AsyncClient):
     assert login.status_code == 200
 
 
-"""/contracts query Test cases"""
+"""/providers query Test cases"""
 
 
-async def test_get_contracts_list(ac: AsyncClient):
-    response = await ac.get("/contracts",
+async def test_get_providers_list(ac: AsyncClient):
+    response = await ac.get("/providers",
                             params={"sort": "-id"})
     assert response.status_code == 200
 
-    response = await ac.get("/contracts",
+    response = await ac.get("/providers",
                             params={"sort": "id", "limit": 25, "page": 2,
-                                    "period_from": "2023-01-01", "period_to": "2023-02-01"})
+                                    "filter_by_platform": "telegram,facebook",
+                                    "filter_by_branch": "science,culture,fashion"})
     assert response.status_code == 200
 
-    response = await ac.get("/contracts")
+    response = await ac.get("/providers")
     assert response.status_code == 200
 
 
-async def test_get_contract(ac: AsyncClient):
-    response = await ac.get("/contracts/9")
+async def test_get_provider(ac: AsyncClient):
+    response = await ac.get("/providers/9")
     assert response.status_code == 200
 
-    response = await ac.get("/contracts/222223")
+    response = await ac.get("/providers/222223")
     assert response.status_code == 404
 
 

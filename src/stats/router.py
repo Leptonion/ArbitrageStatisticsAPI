@@ -1,6 +1,6 @@
 import datetime
 
-from fastapi import APIRouter, Query, Depends
+from fastapi import APIRouter, Query, Depends, HTTPException
 from fastapi_cache.decorator import cache
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,7 +17,7 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=Stats,
+@router.get("", response_model=Stats,
             description="The route allows you to obtain statistics on purchases and sales. "
                         "Enables subperiod separation for the graph (use - `separate_by`)",
             name="Getting Income/Expenses statistic")
@@ -28,6 +28,9 @@ async def full_profitability(period_from: datetime.date = Query(description="**Y
                                                       description="Valid associations - `week`|`month`|`year`"),
                              session: AsyncSession = Depends(get_async_session),
                              user: User = Depends(current_user)):
+
+    if period_from >= period_to:
+        raise HTTPException(status_code=422, detail="Invalid date range - (period_from - period_to)!")
 
     sub_cntrc_idlist, sub_cntrc_totals = await sub_contracts_sums(period_from, period_to)
     sub_deal_idlist, sub_deal_totals = await sub_deals_sums(period_from, period_to)
